@@ -1,46 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import ReactDOM from "react-dom";
-import "bulmaswatch/superhero/bulmaswatch.min.css";
-import * as esbuild from "esbuild-wasm";
-import { unpkgPathPlugin } from "./plugins/unpkg-path-plugin";
-import { fetchPlugin } from "./plugins/fetch-plugin";
 import Preview from "./components/preview";
-
 import CodeEditor from "./components/code-editor";
+import bundle from "./bundler";
+
+import "bulmaswatch/superhero/bulmaswatch.min.css";
 
 const App = () => {
-  const ref = useRef<any>();
   const [input, setInput] = useState("");
   const [code, setCode] = useState("");
 
-  useEffect(() => {
-    startService();
-  }, []);
-
-  const startService = async () => {
-    ref.current = await esbuild.startService({
-      worker: true,
-      wasmURL: "https://unpkg.com/esbuild-wasm@0.8.27/esbuild.wasm",
-    });
-  };
-
   const onClick = async () => {
-    if (!ref.current) return;
-
-    // Reinitialize iframe before every submit, to make sure everything works as expected
-
-    const result = await ref.current.build({
-      entryPoints: ["index.js"],
-      bundle: true,
-      write: false,
-      plugins: [unpkgPathPlugin(), fetchPlugin(input)],
-      define: {
-        "process.env.NODE_ENV": "'production'",
-        global: "'window'",
-      },
-    });
-
-    setCode(result.outputFiles[0].text);
+    const output = await bundle(input);
+    setCode(output);
   };
 
   return (
